@@ -619,8 +619,7 @@ function renderCheckout() {
         <p class="secure">🔒 Secure payment · 256-bit SSL encryption</p>
         <div class="trust"><span>🔒 SSL secured</span><span>✅ Verified store</span><span>↩️ Buyer protection</span></div>
       </form>
-
-      <aside class="summary">
+     <aside class="summary">
         <h3 style="margin-top:0">Order summary</h3>
         ${cart.map(it => { const p = byId(it.id); return `<div class="cart-item">
           <div class="ic" style="background:${p.bg}">${p.icon}</div>
@@ -628,9 +627,8 @@ function renderCheckout() {
           <div>${money(p.price * it.qty)}</div></div>`; }).join("")}
         ${totalsHTML()}
       </aside>
-    </div>`;
+    </div>`; 
   $("payForm").addEventListener("submit", submitPayment);
-  open("checkoutOverlay");
 }
 
 function submitPayment(e) {
