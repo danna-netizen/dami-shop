@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dami Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --surface: #ffffff;
+    --ink: #1f1b16;
+    --muted: #6d655b;
+    --line: #e8e1d6;
+    --accent: #b5532f;
+    --accent-dark: #8f3e20;
+    --ok: #2e7d4f;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }
+  h1, h2, h3 { font-family: "Playfair Display", Georgia, serif; }
+  button { font: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  /* Header */
+  header { position: sticky; top: 0; z-index: 10; background: rgba(250,247,242,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .nav { max-width: 1200px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo { font-family: "Playfair Display", serif; font-size: 1.5rem; font-weight: 700; }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 22px; list-style: none; }
+  .nav-links a { color: var(--ink); text-decoration: none; font-weight: 500; font-size: .95rem; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .user-chip { font-size: .9rem; color: var(--muted); }
+  .btn { border: none; border-radius: 999px; padding: 10px 20px; background: var(--accent); color: #fff; font-weight: 600; transition: background .2s, opacity .2s; }
+  .btn:hover { background: var(--accent-dark); }
+  .btn:disabled { opacity: .6; cursor: wait; }
+  .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+  .btn-outline:hover { background: var(--ink); color: #fff; }
+  .btn-dark { background: var(--ink); }
+  .btn-dark:hover { background: #000; }
+  .cart-btn { position: relative; }
+  .cart-count { position: absolute; top: -6px; right: -6px; background: var(--accent); color: #fff; font-size: .7rem; border-radius: 999px; padding: 1px 7px; }
+
+  /* Hero */
+  .hero { max-width: 1200px; margin: 0 auto; padding: 70px 20px 50px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.1; margin-bottom: 18px; }
+  .hero p { color: var(--muted); font-size: 1.1rem; margin-bottom: 28px; max-width: 480px; }
+  .hero-art { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .hero-art div { aspect-ratio: 1; border-radius: var(--radius); display: grid; place-items: center; font-size: 3.5rem; }
+  .lock-note { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; font-size: .88rem; color: var(--muted); }
+
+  /* Member banner (after registration) */
+  .member { max-width: 1200px; margin: 24px auto 0; padding: 0 20px; }
+  .member-box { background: var(--ink); color: #fff; border-radius: 18px; padding: 26px 28px; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+  .member-box h2 { font-size: 1.7rem; }
+  .member-box p { color: #cfc6ba; font-size: .95rem; }
+  .member-info { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 12px; font-size: .88rem; }
+  .member-info b { display: block; color: #fff; font-size: .95rem; }
+  .member-info span { color: #a89f93; }
+  .perk { background: var(--accent); padding: 4px 12px; border-radius: 999px; font-size: .78rem; font-weight: 600; display: inline-block; margin-bottom: 8px; }
+
+  /* Sections */
+  section { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+  .section-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
+  .section-head h2 { font-size: 2rem; }
+  .section-head p { color: var(--muted); }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter { border: 1px solid var(--line); background: var(--surface); padding: 8px 16px; border-radius: 999px; font-size: .9rem; }
+  .filter.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .toolbar input, .toolbar select { padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px; font: inherit; font-size: .9rem; background: var(--surface); }
+  .toolbar input { flex: 1; min-width: 180px; }
+  .count { color: var(--muted); font-size: .9rem; margin-bottom: 14px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; transition: transform .2s, box-shadow .2s; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,.08); }
+  .card-img { aspect-ratio: 4/3; display: grid; place-items: center; font-size: 4rem; position: relative; }
+  .badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.9); font-size: .72rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+  .card-body { padding: 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card-body h3 { font-size: 1.1rem; }
+  .price { font-weight: 600; color: var(--accent); font-size: 1.1rem; }
+  .price small { color: var(--muted); text-decoration: line-through; font-weight: 400; font-size: .85rem; margin-left: 6px; }
+  .price.locked { color: var(--muted); font-weight: 500; font-size: .9rem; }
+  .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 10px; }
+  .card-actions .btn { flex: 1; padding: 9px 12px; font-size: .88rem; }
+
+  .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .cat { border-radius: var(--radius); padding: 28px 20px; text-align: center; border: 1px solid var(--line); background: var(--surface); cursor: pointer; transition: border-color .2s; }
+  .cat:hover { border-color: var(--accent); }
+  .cat .icon { font-size: 2.6rem; }
+  .cat h3 { margin-top: 8px; font-size: 1.2rem; }
+  .cat p { color: var(--muted); font-size: .88rem; }
+
+  /* Modals */
+  .overlay { position: fixed; inset: 0; background: rgba(20,16,12,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 18px; width: 100%; max-width: 460px; padding: 30px; position: relative; max-height: 92vh; overflow-y: auto; }
+  .modal.wide { max-width: 760px; }
+  .modal.xwide { max-width: 980px; }
+  .back-btn { margin-bottom: 18px; }
+  .ship-summary { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--bg); margin-bottom: 14px; font-size: .92rem; line-height: 1.6; }
+  .close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 1.6rem; color: var(--muted); }
+  .modal h2 { font-size: 1.7rem; margin-bottom: 6px; }
+  .modal h3 { font-size: 1.15rem; margin: 18px 0 10px; }
+  .modal .sub { color: var(--muted); margin-bottom: 20px; font-size: .95rem; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 6px; }
+  .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: var(--bg); }
+  .field textarea { resize: vertical; min-height: 84px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .error { color: #b3261e; font-size: .8rem; margin-top: 4px; display: none; }
+  .field.invalid .error { display: block; }
+  .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: #b3261e; }
+  .conf-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+  .auth-tab { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px; font-weight: 600; font-size: .9rem; color: var(--muted); }
+  .auth-tab.active { border: 2px solid var(--accent); background: #fdf3ee; color: var(--ink); }
+  .config-banner { background: #fff6e0; border-bottom: 1px solid #f0dca8; color: #7a5b12; text-align: center; padding: 10px 16px; font-size: .88rem; }
+  .config-banner code { background: #f3e6c4; padding: 1px 6px; border-radius: 4px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .full { width: 100%; padding: 13px; margin-top: 6px; }
+
+  .detail { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .detail .card-img { border-radius: var(--radius); font-size: 6rem; aspect-ratio: 1; }
+  .detail .meta { color: var(--muted); font-size: .92rem; margin: 10px 0 14px; }
+  .detail .price { font-size: 1.6rem; }
+  .qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .qty button { background: none; border: none; width: 34px; height: 34px; font-size: 1.1rem; }
+  .qty span { min-width: 28px; text-align: center; font-weight: 600; }
+  .specs { list-style: none; font-size: .88rem; color: var(--muted); margin: 14px 0; }
+  .specs li { padding: 4px 0; }
+
+  .cart-item { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .cart-item .ic { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; font-size: 1.5rem; }
+  .cart-item .nm { font-weight: 500; font-size: .95rem; }
+  .cart-item .rm { background: none; border: none; color: var(--accent); font-size: .8rem; }
+  .totals { margin: 16px 0; font-size: .95rem; }
+  .totals div { display: flex; justify-content: space-between; padding: 4px 0; }
+  .totals .grand { font-weight: 700; font-size: 1.15rem; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
+  .free-ship { font-size: .82rem; color: var(--ok); }
+
+  /* Checkout */
+  .checkout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
+  .summary { background: var(--bg); border-radius: var(--radius); padding: 20px; align-self: start; position: sticky; top: 0; }
+  .summary .cart-item { padding: 8px 0; }
+  .steps { display: flex; gap: 8px; margin-bottom: 18px; font-size: .82rem; }
+  .steps span { padding: 4px 12px; border-radius: 999px; background: var(--bg); color: var(--muted); }
+  .steps span.on { background: var(--ink); color: #fff; }
+  .pay-panel { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+
+
+  .secure { font-size: .8rem; color: var(--muted); text-align: center; margin-top: 10px; }
+  .secure-pay { display: flex; align-items: center; gap: 12px; background: #edf6ef; border: 1px solid #c3e2cd; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; }
+  .secure-pay .lk { font-size: 1.6rem; }
+  .secure-pay b { display: block; color: var(--ok); font-size: 1rem; }
+  .secure-pay span { color: var(--muted); font-size: .82rem; }
+  .trust { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 8px; font-size: .78rem; color: var(--muted); }
+  .trust span { display: inline-flex; align-items: center; gap: 5px; }
+  .demo-note { background: #fff6e0; border: 1px solid #f0dca8; color: #7a5b12; border-radius: 10px; padding: 10px 14px; font-size: .82rem; margin-bottom: 16px; }
+  .spinner { width: 46px; height: 46px; border: 4px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 30px auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .success { text-align: center; padding: 10px 0; }
+  .success .check { width: 70px; height: 70px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 2.2rem; display: grid; place-items: center; margin: 0 auto 14px; }
+  .receipt { text-align: left; background: var(--bg); border-radius: var(--radius); padding: 18px; margin: 18px 0; font-size: .9rem; }
+  .receipt div { display: flex; justify-content: space-between; padding: 3px 0; }
+
+  .order { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; font-size: .9rem; }
+  .order-head { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 4px; }
+  .status { color: var(--ok); font-size: .8rem; font-weight: 600; }
+
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 999px; transition: transform .3s; z-index: 60; font-size: .92rem; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  footer { border-top: 1px solid var(--line); text-align: center; padding: 30px 20px; color: var(--muted); font-size: .88rem; margin-top: 40px; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 40px; }
+    .cats { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    .detail, .checkout, .member-box { grid-template-columns: 1fr; }
+    .summary { position: static; }
+  }
+  @media (max-width: 480px) {
+    .nav-right .btn { padding: 8px 12px; font-size: .82rem; }
+    .user-chip { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav">
+    <div class="logo">Dami<span>.</span>Shop</div>
+    <ul class="nav-links">
+      <li><a href="#" data-jump="clothing">Clothing</a></li>
+      <li><a href="#" data-jump="objects">Objects</a></li>
+      <li><a href="#" data-jump="shoes">Shoes</a></li>
+      <li><a href="#" data-jump="paintings">Paintings</a></li>
+    </ul>
+    <div class="nav-right">
+      <span class="user-chip" id="userChip"></span>
+      <button class="btn btn-outline" id="ordersBtn" hidden>My orders</button>
+      <button class="btn btn-outline" id="authBtn">Sign up</button>
+      <button class="btn btn-dark cart-btn" id="cartBtn">🛒 Cart <span class="cart-count" id="cartCount">0</span></button>
+    </div>
+  </nav>
+</header>
+
+<!-- Shown only after registration -->
+<div class="member" id="memberBanner" hidden>
+  <div class="member-box">
+    <div>
+      <span class="perk">MEMBER</span>
+      <h2 id="memberTitle">Welcome back!</h2>
+      <p>Prices are now unlocked. Enjoy free shipping on orders over $100 and 10% off items marked SALE.</p>
+      <div class="member-info">
+        <div><span>Name</span><b id="mName"></b></div>
+        <div><span>Phone</span><b id="mPhone"></b></div>
+      </div>
+    </div>
+    <button class="btn" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Browse prices</button>
+  </div>
+</div>
+
+<div class="hero" id="hero">
+  <div>
+    <h1>Curated goods for everyday living.</h1>
+    <p>Discover 80 handpicked pieces: clothing, unique home objects, timeless shoes and original paintings from independent makers.</p>
+    <button class="btn" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">Start shopping</button>
+    <button class="btn btn-outline" id="heroSignup">Create an account</button>
+    <div class="lock-note" id="lockNote">🔒 Members only: sign up to see details, prices and to buy.</div>
+  </div>
+  <div class="hero-art">
+    <div style="background:#f1dccf">👗</div>
+    <div style="background:#dde5d8">🏺</div>
+    <div style="background:#d9dfe8">👟</div>
+    <div style="background:#efe3c4">🖼️</div>
+  </div>
+</div>
+
+<section>
+  <div class="section-head"><h2>Shop by category</h2></div>
+  <div class="cats">
+    <div class="cat" data-jump="clothing"><div class="icon">👕</div><h3>Clothing</h3><p>20 items · shirts, coats & dresses</p></div>
+    <div class="cat" data-jump="objects"><div class="icon">🕯️</div><h3>Objects</h3><p>20 items · decor & home</p></div>
+    <div class="cat" data-jump="shoes"><div class="icon">👞</div><h3>Shoes</h3><p>20 items · sneakers, boots & heels</p></div>
+    <div class="cat" data-jump="paintings"><div class="icon">🎨</div><h3>Paintings</h3><p>20 items · original artworks</p></div>
+  </div>
+</section>
+
+<section id="shop">
+  <div class="section-head">
+    <div>
+      <h2>All products</h2>
+      <p>New arrivals this season</p>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button class="filter active" data-cat="all">All</button>
+      <button class="filter" data-cat="clothing">Clothing</button>
+      <button class="filter" data-cat="objects">Objects</button>
+      <button class="filter" data-cat="shoes">Shoes</button>
+      <button class="filter" data-cat="paintings">Paintings</button>
+    </div>
+    <input id="search" type="search" placeholder="Search products…">
+    <select id="sort">
+      <option value="featured">Sort: Featured</option>
+      <option value="low">Price: low to high</option>
+      <option value="high">Price: high to low</option>
+      <option value="name">Name: A–Z</option>
+    </select>
+  </div>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<footer>© 2026 Dami Shop · Clothing · Objects · Shoes · Paintings</footer>
+
+<!-- Registration: one step -->
+<div class="overlay" id="registerOverlay">
+  <div class="modal">
+    <button class="close" data-close aria-label="Close">&times;</button>
+    <h2 id="authTitle">Create your account</h2>
+    <p class="sub" id="authSub">Register to unlock prices, product details and checkout.</p>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" data-auth="register">Create account</button>
+      <button type="button" class="auth-tab" data-auth="login">Log in</button>
+    </div>
+
+    <form id="signupForm" novalidate>
+      <div class="field">
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" placeholder="e.g. Jane Smith" autocomplete="name">
+        <div class="error">Please enter your full name.</div>
+      </div>
+      <div class="field">
+        <label for="regEmail">Email</label>
+        <input id="regEmail" name="regEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <div class="error">Please enter a valid email.</div>
+      </div>
+      <div class="field">
+        <label for="street">Street and house number</label>
+        <input id="street" name="street" type="text" placeholder="e.g. 123 Main St, Apt 4" autocomplete="street-address">
+        <div class="error">Please enter your street and number.</div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" name="city" type="text" placeholder="e.g. Mexico City" autocomplete="address-level2">
+          <div class="error">Please enter your city.</div>
+        </div>
+        <div class="field">
+          <label for="zip">Postal code</label>
+          <input id="zip" name="zip" type="text" placeholder="e.g. 01234" autocomplete="postal-code">
+          <div class="error">Invalid postal code.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="phone">Phone number</label>
+        <input id="phone" name="phone" type="tel" placeholder="e.g. +52 55 1234 5678" autocomplete="tel">
+        <div class="error">Please enter a valid phone number.</div>
+      </div>
+      <div class="field">
+        <label for="regPassword">Password</label>
+        <input id="regPassword" name="regPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <div class="error">At least 6 characters.</div>
+      </div>
+      <p class="sub" style="font-size:.82rem;margin-bottom:10px">By creating an account you accept the <a href="terminos.pdf" target="_blank" rel="noopener" style="color:var(--accent)">Terms and Conditions</a>.</p>
+      <button class="btn full" type="submit" id="signupBtn">Create my account</button>
+    </form>
+
+    <form id="loginForm" novalidate hidden>
+      <div class="field">
+        <label for="logEmail">Email</label>
+        <input id="logEmail" name="logEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <div class="error">Please enter a valid email.</div>
+      </div>
+      <div class="field">
+        <label for="logPassword">Password</label>
+        <input id="logPassword" name="logPassword" type="password" placeholder="Your password" autocomplete="current-password">
+        <div class="error">Please enter your password.</div>
+      </div>
+      <button class="btn full" type="submit">Log in</button>
+    </form>
+  </div>
+</div>
+
+<!-- Product detail -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal wide">
+    <button class="btn btn-outline back-btn" type="button" data-close>&larr; Back</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- Cart -->
+<div class="overlay" id="cartOverlay">
+  <div class="modal">
+    <button class="close" data-close>&times;</button>
+    <h2>Your cart</h2>
+    <div id="cartContent"></div>
+  </div>
+</div> 
+
+<!-- Checkout / payment -->
+<div class="overlay" id="checkoutOverlay">
+  <div class="modal xwide">
+    <button class="close" data-close>&times;</button>
+    <div id="checkoutContent"></div>
+  </div>
+</div>
+
+<!-- Orders -->
+<div class="overlay" id="ordersOverlay">
+  <div class="modal wide">
+    <button class="close" data-close>&times;</button>
+    <h2>My orders</h2>
+    <p class="sub">Your purchase history.</p>
+    <div id="ordersContent"></div>
+  </div>
+</div>
+
+<!-- Permanent lock screen -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Catalog ----------
+// Products and prices are NOT stored in this page anymore. They live in the
+// Supabase "products" table and are fetched only AFTER the user logs in, so a
+// logged-out visitor sees no prices in the page source (view-source / inspect).
+const catLabel = { clothing: "Clothing", objects: "Objects", shoes: "Shoes", paintings: "Paintings" };
+let products = [];
+const byId = id => products.find(p => p.id === id);
+const money = n => "$" + n.toFixed(2);
+
+// ---------- State ----------
+function load(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } }
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+let user = null;              // profile {name, address, city, zip, phone} (from Supabase)
+let authUserId = null;        // Supabase auth user id
+let cart = load("mm_cart2", []);  // [{id, qty}] — cart stays in the browser, no prices in it
+let orders = [];              // fetched from Supabase
+let pendingAction = null;
+let currentFilter = "all";
+let detailQty = 1;
+
+const $ = id => document.getElementById(id);
+// Escapes user-entered text before it goes into HTML.
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// ---------- Supabase (backend: login + prices + orders) ----------
+const configured = typeof SUPABASE_URL === "string" && !/PASTE_YOUR/.test(SUPABASE_URL);
+const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+function toProduct(r) {
+  return { id: r.id, cat: r.category, name: r.name, base: +r.base_price,
+    price: r.on_sale ? +(r.base_price * 0.9).toFixed(2) : +r.base_price,
+    icon: r.icon, bg: r.bg, desc: r.description, sale: !!r.on_sale, order: r.sort };
+}
+async function loadProducts() {
+  if (!sb) return;
+  const { data, error } = await sb.from("products").select("*").order("sort");
+  if (error) { console.warn("products:", error.message); return; }
+  products = data.map(toProduct);
+}
+// Dialog UI strings are fetched from the server so they are NOT in
+// the page source for logged-out visitors.
+let UI = {};
+const T = (key) => UI[key] || "";
+async function loadUiText() {
+  if (!sb) return;
+  const { data, error } = await sb.from("ui_text").select("key,val");
+  if (error) { console.warn("ui_text:", error.message); return; }
+  UI = Object.fromEntries((data || []).map(r => [r.key, r.val]));
+}
+function orderFromRow(o) {
+  return { id: o.code, dbId: o.id,
+    date: new Date(o.created_at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+    items: o.items, total: +o.total, method: o.method, address: o.address, status: o.status };
+}
+// `user` is set once the signed-in account has a Dami Shop profile.
+async function loadProfileAndOrders(uid) {
+  const { data: prof } = await sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+  if (!prof) {
+    user = null; orders = []; products = [];
+    return;
+  }
+  user = { name: prof.name || "Member", address: prof.address || "", city: prof.city || "", zip: prof.zip || "", phone: prof.phone || "" };
+  const { data: ords } = await sb.from("orders").select("*").not("items", "is", null).order("created_at", { ascending: false });
+  orders = (ords || []).map(orderFromRow);
+}
+async function refreshSession() {
+  if (!sb) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    authUserId = session.user.id;
+    await loadProfileAndOrders(authUserId);
+    if (user) await Promise.all([loadProducts(), loadUiText()]);
+  } else {
+    authUserId = null; user = null; products = []; orders = [];
+  }
+}
+
+// ---------- Rendering ----------
+function renderGrid() {
+  const q = $("search").value.trim().toLowerCase();
+  let list = products.filter(p => (currentFilter === "all" || p.cat === currentFilter) && (!q || p.name.toLowerCase().includes(q)));
+  const s = $("sort").value;
+  if (s === "low") list.sort((a, b) => a.price - b.price);
+  if (s === "high") list.sort((a, b) => b.price - a.price);
+  if (s === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+  $("count").textContent = `${list.length} product${list.length === 1 ? "" : "s"}`;
+  $("grid").innerHTML = list.map(p => `
+    <article class="card">
+      <div class="card-img" style="background:${p.bg}">
+        <span class="badge">${p.sale && user ? "SALE −10%" : catLabel[p.cat]}</span>${p.icon}
+      </div>
+      <div class="card-body">
+        <h3>${p.name}</h3>
+        ${user
+          ? `<div class="price">${money(p.price)}${p.sale ? `<small>${money(p.base)}</small>` : ""}</div>`
+          : `<div class="price locked">🔒 Sign up to see price</div>`}
+        <div class="card-actions">
+          <button class="btn btn-outline" data-view="${p.id}">View</button>
+          <button class="btn" data-buy="${p.id}">${user ? "Add to cart" : "Buy"}</button>
+        </div>
+      </div>
+    </article>`).join("") || `<p class="sub">No products match your search.</p>`;
+}
+
+function renderHeader() {
+  $("userChip").textContent = user ? `Hi, ${user.name.split(" ")[0]}` : "";
+  $("authBtn").textContent = user ? "Log out" : "Sign up";
+  $("heroSignup").textContent = "Create an account";
+  $("ordersBtn").hidden = !user;
+  $("cartCount").textContent = cart.reduce((s, i) => s + i.qty, 0);
+  $("memberBanner").hidden = !user;
+  $("heroSignup").hidden = !!user;
+  $("lockNote").hidden = !!user;
+  if (user) {
+    $("memberTitle").textContent = `Welcome, ${user.name.split(" ")[0]}!`;
+    $("mName").textContent = user.name;
+    $("mPhone").textContent = user.phone;
+  }
+}
+
+function totals() {
+  const subtotal = cart.reduce((s, i) => s + byId(i.id).price * i.qty, 0);
+  const shipping = subtotal === 0 || subtotal >= 100 ? 0 : 9.99;
+  const tax = +(subtotal * 0.08).toFixed(2);
+  return { subtotal, shipping, tax, total: subtotal + shipping + tax };
+}
+
+function totalsHTML() {
+  const t = totals();
+  return `<div class="totals">
+    <div><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+    <div><span>Shipping</span><span>${t.shipping ? money(t.shipping) : "FREE"}</span></div>
+    <div><span>Tax (8%)</span><span>${money(t.tax)}</span></div>
+    <div class="grand"><span>Total</span><span>${money(t.total)}</span></div>
+    ${t.shipping ? `<div class="free-ship">Add ${money(100 - t.subtotal)} more for free shipping</div>` : ""}
+  </div>`;
+}
+
+function renderCart() {
+  if (!cart.length) {
+    $("cartContent").innerHTML = `<p class="sub" style="margin-top:10px">Your cart is empty.</p>`;
+    return;
+  }
+  $("cartContent").innerHTML = cart.map((it, i) => {
+    const p = byId(it.id);
+    return `<div class="cart-item">
+      <div class="ic" style="background:${p.bg}">${p.icon}</div>
+      <div><div class="nm">${p.name}</div>
+        <div class="qty" style="margin-top:4px"><button data-dec="${i}">−</button><span>${it.qty}</span><button data-inc="${i}">+</button></div>
+      </div>
+      <div style="text-align:right">${money(p.price * it.qty)}<br><button class="rm" data-remove="${i}">Remove</button></div>
+    </div>`;
+  }).join("") + totalsHTML() + `<button class="btn full" id="goCheckout">Proceed to checkout</button>`;
+}
+
+function showDetail(id) {
+  const p = byId(id);
+  detailQty = 1;
+  $("detailContent").innerHTML = `
+    <div class="detail">
+      <div class="card-img" style="background:${p.bg}">${p.icon}</div>
+      <div>
+        <span class="badge" style="position:static">${p.sale ? "SALE −10%" : catLabel[p.cat]}</span>
+        <h2 style="margin-top:10px">${p.name}</h2>
+        <div class="price">${money(p.price)}${p.sale ? `<small>${money(p.base)}</small>` : ""}</div>
+        <p class="meta">${p.desc}</p>
+        <ul class="specs">
+          <li>📦 Ships in 2–4 business days</li>
+          <li>🚚 ${p.price >= 100 ? "Free shipping" : "Free shipping on orders over $100"}</li>
+          <li>↩️ 30-day free returns</li>
+          <li>⭐ ${(4 + (p.id % 10) / 10).toFixed(1)} / 5 · ${20 + p.id * 7} reviews</li>
+        </ul>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="qty"><button id="qMinus">−</button><span id="qVal">1</span><button id="qPlus">+</button></div>
+          <button class="btn" data-addqty="${p.id}" style="flex:1">Add to cart</button>
+        </div>
+        <button class="btn btn-dark full" data-buynow="${p.id}" style="margin-top:10px">Buy now</button>
+      </div>
+    </div>`;
+  open("detailOverlay");
+}
+
+// ---------- Checkout & payment ----------
+// Shows the editable address fields instead of the saved-address card.
+function showShipFields() {
+  $("shipSummary")?.remove();
+  $("shipFields").hidden = false;
+}
+function renderCheckout() {
+  const t = totals();
+  // Everything was saved at sign-up → show it as a card; one click on "Place order" is enough.
+  const saved = !!(user.name && user.address && user.city && user.zip && user.phone);
+  $("checkoutContent").innerHTML = `
+    <h2>Checkout</h2>
+    <div class="steps"><span>1. Cart</span><span class="on">2. Shipping & payment</span></div>
+    <div class="secure-pay">
+      <span class="lk">🔒</span>
+      <div><b>Secure Payment</b><span>Your details are protected with 256-bit SSL encryption and never shared.</span></div>
+    </div>
+    <div class="checkout">
+      <form id="payForm" novalidate>
+        <h3 style="margin-top:0">Shipping address</h3>
+        ${saved ? `<div class="ship-summary" id="shipSummary">
+          <div><b>${esc(user.name)}</b><br>${esc(user.address)}<br>${esc(user.city)} ${esc(user.zip)}<br>📞 ${esc(user.phone)}</div>
+          <button type="button" class="btn btn-outline" id="editShip">Edit</button>
+        </div>` : ""}
+        <div id="shipFields"${saved ? " hidden" : ""}>
+        <div class="field"><label>Full name</label><input name="shipName" value="${esc(user.name)}"><div class="error">Required.</div></div>
+        <div class="field"><label>Street address</label><input name="street" placeholder="123 Main St, Apt 4" value="${esc(user.address)}"><div class="error">Please enter your street address.</div></div>
+        <div class="row">
+          <div class="field"><label>City</label><input name="shipCity" value="${esc(user.city)}"><div class="error">Required.</div></div>
+          <div class="field"><label>Postal code</label><input name="shipZip" value="${esc(user.zip)}"><div class="error">Invalid postal code.</div></div>
+        </div>
+        <div class="field"><label>Phone</label><input name="phone" type="tel" placeholder="+1 555 123 4567" value="${esc(user.phone)}"><div class="error">Enter a valid phone number.</div></div>
+        </div>
+
+        <h3>Payment method</h3>
+
+        <div class="pay-panel">
+          <p class="sub" style="margin:0">💵 <b>Cash on delivery</b> — pay in cash when your order arrives. Please have the exact amount ready: <b>${money(t.total)}</b>.</p>
+        </div>
+
+        <button class="btn full" type="submit" id="payBtn" style="display:none">info</button>
+        <p class="secure">🔒 Secure payment · 256-bit SSL encryption</p>
+        <div class="trust"><span>🔒 SSL secured</span><span>✅ Verified store</span><span>↩️ Buyer protection</span></div>
+      </form>
+
+      <aside class="summary">
+        <h3 style="margin-top:0">Order summary</h3>
+        ${cart.map(it => { const p = byId(it.id); return `<div class="cart-item">
+          <div class="ic" style="background:${p.bg}">${p.icon}</div>
+          <div class="nm">${p.name}<br><span style="color:var(--muted);font-size:.8rem">Qty ${it.qty}</span></div>
+          <div>${money(p.price * it.qty)}</div></div>`; }).join("")}
+        ${totalsHTML()}
+      </aside>
+    </div>`;
+  $("payForm").addEventListener("submit", submitPayment);
+  open("checkoutOverlay");
+}
+
+function submitPayment(e) {
+  e.preventDefault();
+  const f = e.target;
+  const checks = {
+    shipName: f.shipName.value.trim().length >= 2,
+    street: f.street.value.trim().length >= 5,
+    shipCity: f.shipCity.value.trim().length >= 2,
+    shipZip: /^[A-Za-z0-9 -]{3,10}$/.test(f.shipZip.value.trim()),
+    phone: f.phone.value.replace(/\D/g, "").length >= 7,
+  };
+
+  let ok = true;
+  f.querySelectorAll(".field").forEach(el => el.classList.remove("invalid"));
+  for (const k in checks) if (!checks[k]) { f[k].closest(".field").classList.add("invalid"); ok = false; }
+  if (!ok) { showShipFields(); f.querySelector(".invalid input")?.focus(); return; }
+
+  const t = totals();
+  const order = {
+    id: "DS-" + Math.floor(100000 + Math.random() * 900000),
+    date: new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+    items: cart.map(it => ({ name: byId(it.id).name, icon: byId(it.id).icon, qty: it.qty, price: byId(it.id).price })),
+    total: t.total,
+    method: "Cash on delivery",
+    address: `${f.street.value.trim()}, ${f.shipCity.value.trim()} ${f.shipZip.value.trim()}`,
+    status: "Pay on delivery · Preparing shipment",
+  };
+
+  // Processing screen, then store the order on the server (Supabase).
+  (async () => {
+    if (sb && authUserId) {
+      const { data, error } = await sb.from("orders").insert({
+        user_id: authUserId, code: order.id, items: order.items, total: order.total,
+        method: order.method, address: order.address, status: order.status,
+      }).select().single();
+      if (error) { toast(error.message); }
+      else order.dbId = data.id;
+    }
+    orders.unshift(order);
+    cart = []; save("mm_cart2", cart); renderHeader();
+  })();
+}
+
+// ---------- Cancel / refund request ----------
+function renderRequestForm(type, oid) {
+  const o = orders.find(x => x.id === oid);
+  const isCancel = type === "cancel";
+  const title = isCancel ? "Cancel order" : "Request a refund";
+  $("checkoutContent").innerHTML = `
+    <div class="success" style="max-width:460px;margin:0 auto">
+      <div class="check" style="background:${isCancel ? "var(--accent)" : "var(--ink)"}">?</div>
+      <h2>${T("sure_title")}</h2>
+      <p class="sub">${isCancel ? T("sure_lead_cancel") : T("sure_lead_refund")} <b>${oid}</b>${o ? ` (${money(o.total)})` : ""}. ${T("sure_undone")}</p>
+      <form id="requestForm" novalidate style="text-align:left">
+        <div class="field">
+          <label for="reqReason">${isCancel ? T("reason_label_cancel") : T("reason_label_refund")}</label>
+          <textarea id="reqReason" name="reason" placeholder="${T("reason_ph")}"></textarea>
+          <div class="error">${T("reason_err")}</div>
+        </div>
+        <button class="btn full" type="submit">Confirm ${title.toLowerCase()}</button>
+        <button class="btn btn-outline full" type="button" id="backToConf" style="margin-top:8px">Go back</button>
+      </form>
+    </div>`;
+  $("requestForm").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const field = ev.target.querySelector(".field");
+    const reason = ev.target.reason.value.trim();
+    if (reason.length < 3) { field.classList.add("invalid"); ev.target.reason.focus(); return; }
+    if (o) {
+      o.status = isCancel ? "Cancelled by customer" : "Refund requested"; o.reason = reason;
+      if (sb && o.dbId) sb.from("orders").update({ status: o.status, reason }).eq("id", o.dbId);
+    }
+    $("checkoutContent").innerHTML = `
+      <div class="success">
+        <div class="check">✓</div>
+        <h2>${isCancel ? T("done_cancel_title") : T("done_refund_title")}</h2>
+        <p class="sub">${(isCancel ? T("done_cancel_msg") : T("done_refund_msg")).replace("{id}", `<b>${oid}</b>`)}</p>
+        <div class="conf-actions">
+          <button class="btn" data-close>Continue shopping</button>
+          <button class="btn btn-dark" id="seeOrders">View my orders</button>
+        </div>
+      </div>`;
+  });
+  $("reqReason").addEventListener("input", () => $("requestForm").querySelector(".field").classList.remove("invalid"));
+}
+
+function renderOrders() {
+  $("ordersContent").innerHTML = orders.length ? orders.map(o => `
+    <div class="order">
+      <div class="order-head"><span>${o.id}</span><span>${money(o.total)}</span></div>
+      <div style="color:var(--muted);font-size:.82rem">${o.date} · ${o.method}</div>
+      <div style="margin:6px 0">${o.items.map(i => `${i.icon} ${i.name} ×${i.qty}`).join(" · ")}</div>
+      <div class="status">● ${o.status}</div>
+    </div>`).join("") : `<p class="sub">You haven't placed any orders yet.</p>`;
+  open("ordersOverlay");
+}
+
+// ---------- Helpers ----------
+function open(id) {
+  $(id).classList.add("open");
+}
+
+// Clear any permanent "lock" left in the browser by the old registration prank.
+try { localStorage.removeItem("mm_locked"); } catch {}
+function close(id) { $(id).classList.remove("open"); }
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2400);
+}
+function requireUser(action) {
+  if (user) return action();
+  pendingAction = action;
+  openAuth("register");
+}
+function addToCart(id, qty = 1) {
+  const it = cart.find(i => i.id === id);
+  if (it) it.qty += qty; else cart.push({ id, qty });
+  save("mm_cart2", cart); renderHeader();
+  toast(`${byId(id).name} added to cart`);
+}
+function setFilter(cat) {
+  currentFilter = cat;
+  document.querySelectorAll(".filter").forEach(f => f.classList.toggle("active", f.dataset.cat === cat));
+  renderGrid();
+}
+
+// ---------- Events ----------
+document.addEventListener("click", e => {
+  const t = e.target.closest("button, [data-jump], .overlay") || e.target;
+  if (t.matches("[data-close]") || (t.classList.contains("overlay") && e.target === t)) {
+    (t.closest(".overlay") || t).classList.remove("open");
+    pendingAction = null;
+    return;
+  }
+  const d = t.dataset || {};
+  if (d.view) requireUser(() => showDetail(+d.view));
+  if (d.buy) requireUser(() => addToCart(+d.buy));
+  if (d.addqty) { addToCart(+d.addqty, detailQty); close("detailOverlay"); }
+  if (d.buynow) { addToCart(+d.buynow, detailQty); close("detailOverlay"); renderCheckout(); }
+  if (t.id === "qMinus") { detailQty = Math.max(1, detailQty - 1); $("qVal").textContent = detailQty; }
+  if (t.id === "qPlus") { detailQty = Math.min(10, detailQty + 1); $("qVal").textContent = detailQty; }
+  if (d.inc !== undefined) { cart[+d.inc].qty++; save("mm_cart2", cart); renderCart(); renderHeader(); }
+  if (d.dec !== undefined) { const it = cart[+d.dec]; if (it.qty > 1) it.qty--; else cart.splice(+d.dec, 1); save("mm_cart2", cart); renderCart(); renderHeader(); }
+  if (d.remove !== undefined) { cart.splice(+d.remove, 1); save("mm_cart2", cart); renderCart(); renderHeader(); }
+  if (t.id === "goCheckout") { close("cartOverlay"); renderCheckout(); }
+  if (d.request) renderRequestForm(d.request, d.oid);
+  if (t.id === "seeOrders") { close("checkoutOverlay"); renderOrders(); }
+  if (d.jump) {
+    e.preventDefault();
+    setFilter(d.jump);
+    $("shop").scrollIntoView({ behavior: "smooth" });
+  }
+  if (t.matches(".filter")) setFilter(d.cat);
+});
+
+$("search").addEventListener("input", renderGrid);
+$("sort").addEventListener("change", renderGrid);
+
+// ---------- Auth (Supabase): one-step sign-up + email/password login ----------
+// Sign-up sends name, street, city, postal code and phone as user metadata; a
+// trigger in db/schema.sql creates the profile from it on the server, so
+// it works even when Supabase asks the user to confirm their email first.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^\+?[0-9 ()-]{7,20}$/;
+const ZIP_RE = /^[A-Za-z0-9 -]{3,10}$/;
+
+function setAuthMode(mode) {
+  const reg = mode !== "login";
+  document.querySelectorAll(".auth-tab").forEach(b => b.classList.toggle("active", (b.dataset.auth === "login") === !reg));
+  $("signupForm").hidden = !reg;
+  $("loginForm").hidden = reg;
+  $("authTitle").textContent = reg ? "Create your account" : "Welcome back";
+  $("authSub").textContent = reg
+    ? "Register to unlock prices, product details and checkout."
+    : "Log in to see prices and your orders.";
+  document.querySelector(reg ? "#signupForm input" : "#loginForm input")?.focus();
+}
+function openAuth(mode) { open("registerOverlay"); setAuthMode(mode || "register"); }
+
+// Marks invalid fields; `checks` maps a field name to true/false.
+function validate(form, checks) {
+  let ok = true;
+  for (const k in checks) {
+    const el = form.querySelector(`[name="${k}"]`).closest(".field");
+    el.classList.toggle("invalid", !checks[k]);
+    if (!checks[k]) ok = false;
+  }
+  if (!ok) form.querySelector(".invalid input")?.focus();
+  return ok;
+}
+async function withBusy(btn, label, work) {
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = label;
+  try { return await work(); } catch (err) { console.warn(err); } finally { btn.disabled = false; btn.textContent = old; }
+}
+
+async function afterAuth() {
+  await loadProfileAndOrders(authUserId);
+  if (!user) {                       // signed in, but this account has no Dami Shop profile
+    await sb.auth.signOut();
+    authUserId = null;
+    toast("This account has no Dami Shop profile. Please create an account.");
+    renderHeader(); renderGrid();
+    return;
+  }
+  await Promise.all([loadProducts(), loadUiText()]);
+  close("registerOverlay");
+  $("signupForm").reset(); $("loginForm").reset();
+  renderHeader(); renderGrid();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  toast(`Welcome, ${user.name.split(" ")[0]}! Prices are now unlocked.`);
+  if (pendingAction) { const a = pendingAction; pendingAction = null; a(); }
+}
+async function logout() {
+  if (sb) await sb.auth.signOut();
+  user = null; authUserId = null; products = []; orders = []; cart = [];
+  try { localStorage.removeItem("mm_cart2"); } catch {}
+  renderHeader(); renderGrid();
+}
+
+$("authBtn").addEventListener("click", async () => {
+  if (user) { await logout(); toast("You have been logged out."); }
+  else openAuth("register");
+});
+$("heroSignup").addEventListener("click", () => openAuth("register"));
+$("ordersBtn").addEventListener("click", renderOrders);
+$("cartBtn").addEventListener("click", () => requireUser(() => { renderCart(); open("cartOverlay"); }));
+document.addEventListener("click", e => { if (e.target.matches(".auth-tab")) setAuthMode(e.target.dataset.auth); });
+document.querySelectorAll("#signupForm, #loginForm").forEach(f =>
+  f.addEventListener("input", e => e.target.closest(".field")?.classList.remove("invalid")));
+
+// Sign-up — everything in one form
+$("signupForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!sb) { toast("Backend not configured yet — add your Supabase keys in config.js."); return; }
+  const f = e.target;
+  const name = f.name.value.trim(), email = f.regEmail.value.trim(), street = f.street.value.trim(),
+        city = f.city.value.trim(), zip = f.zip.value.trim(), phone = f.phone.value.trim(), password = f.regPassword.value;
+  if (!validate(f, { name: name.length >= 2, regEmail: EMAIL_RE.test(email), street: street.length >= 5,
+                     city: city.length >= 2, zip: ZIP_RE.test(zip), phone: PHONE_RE.test(phone),
+                     regPassword: password.length >= 6 })) return;
+  await withBusy($("signupBtn"), "Creating account…", async () => {
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name, street, city, zip, phone } } });
+    
+    const exists = (error && /registered|exists/i.test(error.message)) || (data?.user && data.user.identities?.length === 0);
+    if (exists) {
+      toast("This email already has an account. Please log in.");
+      setAuthMode("login"); $("logEmail").value = email;
+      return;
+    }
+    if (error) { toast(error.message); return; }
+    if (!data.session) {
+      toast("Check your email to confirm your account, then log in.");
+      setAuthMode("login"); $("logEmail").value = email;
+      return;
+    }
+    authUserId = data.user.id;
+    await afterAuth();
+  });
+});
+
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!sb) { toast("Backend not configured yet — add your Supabase keys in config.js."); return; }
+  const f = e.target;
+  const email = f.logEmail.value.trim();
+  if (!validate(f, { logEmail: EMAIL_RE.test(email), logPassword: f.logPassword.value.length >= 1 })) return;
+  await withBusy(f.querySelector("[type=submit]"), "Logging in…", async () => {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: f.logPassword.value });
+    if (error) { toast(/confirm/i.test(error.message) ? "Please confirm your email first, then log in." : "Wrong email or password."); return; }
+    authUserId = data.user.id;
+    await afterAuth();
+  });
+});
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".back-btn")) return;
+  requireUser(() => {
+    renderCheckout();
+    $("payBtn").click();
+  });
+});
+
+// ---------- Startup ----------
+(async function init() {
+  if (!sb) {
+    const bar = document.createElement("div");
+    bar.className = "config-banner";
+    bar.innerHTML = "⚙️ Backend not connected yet. Add your Supabase Project URL and anon key in <code>config.js</code> to load prices and enable login.";
+    document.body.prepend(bar);
+  }
+  await refreshSession();
+  renderHeader();
+  renderGrid();
+  // Signed in with an account that has no Dami Shop profile → sign out quietly.
+  if (authUserId && !user) { await sb.auth.signOut(); authUserId = null; renderHeader(); }
+})();
+</script>
+</body>
+</html>
